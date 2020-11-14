@@ -228,10 +228,16 @@ Some settings to make the cursor more friendly and informative
 Themes are like the weather, everchanging. Currently I'm fond of...
 #+begin_src emacs-lisp
   (setq custom-safe-theme t)
-  (use-package vscode-dark-plus-theme
-    :ensure t
-    :init
-    (load-theme 'vscode-dark-plus t))
+  ;; (use-package vscode-dark-plus-theme
+  ;;   :ensure t
+  ;;   :init
+  ;;   (load-theme 'vscode-dark-plus t))
+  (use-package doom-themes
+    :config
+    ;; Global Settings (defaults)
+    (setq doom-themes-emable-bold t     ; if nil, bold is universally disabled
+	  doom-themes-enable-italic t)  ; if nil, italics is universally disabled
+    (load-theme 'doom-palenight t))
 
   (message "Themes Completed")
 #+end_src
@@ -259,40 +265,41 @@ Themes are like the weather, everchanging. Currently I'm fond of...
   (message "Modeline Completed")
 #+end_src
 ** Fonts
+
 #+begin_src emacs-lisp
-  (when *is-a-mac*
-    (progn
-      (set-face-attribute 'default nil :height 130 :weight 'normal :family "Cascadia Code PL")
-      (message "Font set to Cascadia")))
-  (when *is-a-linux*
-    (progn
-      (set-face-attribute 'default nil :height 120 :weight 'normal :family "Cascadia Code PL")))
-  ;; this is a ligiture thing...
-  (if (fboundp 'mac-auto-operator-composition-mode)
-      (mac-auto-operator-composition-mode))
+    (when *is-a-mac*
+      (progn
+	(set-face-attribute 'default nil :height 130 :weight 'normal :family "Cascadia Code PL")
+	(message "Font set to Cascadia")))
+    (when *is-a-linux*
+      (progn
+	(set-face-attribute 'default nil :height 110 :weight 'normal :family "Source Code Pro")))
+    ;; this is a ligiture thing...
+    (if (fboundp 'mac-auto-operator-composition-mode)
+	(mac-auto-operator-composition-mode))
 
-  ;; kinda stupid not to take advantage of the advanced font features when available
+    ;; kinda stupid not to take advantage of the advanced font features when available
 
-  (defun dpy/push-to-prettify-alist ()
-        "Push a bunch of symbols to the prettify alist."
-        (push '("!="     . ?≠) prettify-symbols-alist)
-        (push '("<="     . ?≤) prettify-symbols-alist)
-        (push '(">="     . ?≥) prettify-symbols-alist)
-        (push '("=>"     . ?⇒) prettify-symbols-alist)
-        (push '("<="     . ?⇐) prettify-symbols-alist)
-        (push '("sum"    . ?Σ) prettify-symbols-alist)
-        (push '("**2"    . ?²) prettify-symbols-alist)
-        (push '("**3"    . ?³) prettify-symbols-alist)
-        (push '("None"   . ?∅) prettify-symbols-alist)
-        (push '("pi"     . ?π) prettify-symbols-alist)
-        (push '("lambda" . ?λ) prettify-symbols-alist))
+    (defun dpy/push-to-prettify-alist ()
+	  "Push a bunch of symbols to the prettify alist."
+	  (push '("!="     . ?≠) prettify-symbols-alist)
+	  (push '("<="     . ?≤) prettify-symbols-alist)
+	  (push '(">="     . ?≥) prettify-symbols-alist)
+	  (push '("=>"     . ?⇒) prettify-symbols-alist)
+	  (push '("<="     . ?⇐) prettify-symbols-alist)
+	  (push '("sum"    . ?Σ) prettify-symbols-alist)
+	  (push '("**2"    . ?²) prettify-symbols-alist)
+	  (push '("**3"    . ?³) prettify-symbols-alist)
+	  (push '("None"   . ?∅) prettify-symbols-alist)
+	  (push '("pi"     . ?π) prettify-symbols-alist)
+	  (push '("lambda" . ?λ) prettify-symbols-alist))
 
-  (add-hook 'after-init-hook (lambda ()
-                              'dpy/push-to-prettify-alist))
-  (add-hook 'prog-mode-hook #'prettify-symbols-mode)
-  (add-hook 'org-mode-hook  #'prettify-symbols-mode)
+    (add-hook 'after-init-hook (lambda ()
+				'dpy/push-to-prettify-alist))
+    (add-hook 'prog-mode-hook #'prettify-symbols-mode)
+    (add-hook 'org-mode-hook  #'prettify-symbols-mode)
 
-  (message "Fonts Completed")
+    (message "Fonts Completed")
 #+end_src
 ** Delight
 Delight, Diminish, Minions all serve the same purpose: ditch or minimize the impact of minor modes on the mode line:
@@ -348,6 +355,19 @@ Beacon is an awesome itsy package that simply highlights the current row when yo
 
   (message "Beacon Completed")
 #+end_src
+** Helpful
+#+begin_src emacs-lisp
+  (use-package helpful
+    :ensure t
+    :custom
+    (counsel-describe-function-function #'helpful-callable)
+    (counsel-describe-variable-function #'helpful-variable)
+    :bind
+    ([remap describe-function] . counsel-describe-function)
+    ([remap describe-variable] . counsel-describe-variable)
+    ([remap describe-command]  . helpful-command)
+    ([remap describe-key]      . helpful-key))
+#+end_src
 ** Counsel/Ivy/Swiper
 #+begin_src emacs-lisp
   (use-package counsel
@@ -360,8 +380,6 @@ Beacon is an awesome itsy package that simply highlights the current row when yo
            ("M-x"        . counsel-M-x)
            ("C-x C-f"    . counsel-find-file)
            ("C-x b"      . ivy-switch-buffer)
-           ([remap-describe-function] . counsel-describe-function)
-           ([remap-describe-variable] . counsel-describe-variable))
     :config
     (progn
       (ivy-mode 1)
@@ -374,7 +392,6 @@ Beacon is an awesome itsy package that simply highlights the current row when yo
                                                     (group (char "~#") string-end)
                                                     (group ".elc" string-end)
                                                     (group ".pyc" string-end))))))
-
   (use-package ivy-rich
     :ensure t
     :after (ivy all-the-icons)
@@ -797,22 +814,21 @@ go get -v golang.org/x/tools/cmd/guru
                                 (visual-line-mode)
                                 (org-indent-mode))))
 #+END_SRC
-** Structured Templates
+** COMMENT Structured Templates
 #+BEGIN_SRC emacs-lisp
-  (require 'org-tempo)
   (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
-
+  (setq org-src-window-setup 'split-window-below)
   (message "Structured Templates Completed")
 #+END_SRC
 ** Org Bullets
 #+begin_src emacs-lisp
-  (use-package org-bullets
-    :ensure t
-    :config
-    ;;  (setq org-ellipsis "")
-    (add-hook 'org-mode-hook (lambda ()
-                               (org-bullets-mode 1))))
-  (message "Org-Bullets Completed")
+  ;; (use-package org-bullets
+  ;;   :ensure t
+  ;;   :config
+  ;;   ;;  (setq org-ellipsis "")
+  ;;   (add-hook 'org-mode-hook (lambda ()
+  ;; 			     (org-bullets-mode 1))))
+  ;; (message "Org-Bullets Completed")
 #+end_src
 
 * End
