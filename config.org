@@ -650,8 +650,8 @@ Beacon is an awesome itsy package that simply highlights the current row when yo
   (use-package ivy-posframe
     :ensure t
     :custom
-    (ivy-posframe-width 115)
-    (ivy-posframe-min-width 115)
+    (ivy-posframe-width 80)
+    (ivy-posframe-min-width 80)
     (ivy-posframe-height 10)
     (ivy-posframe-min-height)
     :config
