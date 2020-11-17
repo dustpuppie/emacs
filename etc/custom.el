@@ -5,7 +5,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (org-superstar ivy-posframe smart-mode-line-powerline-theme powerline company smart-mode-line doom-themes yaml-mode ws-butler which-key vscode-dark-plus-theme use-package undo-tree switch-window smartparens ripgrep org no-littering multiple-cursors magit json-mode ivy-rich highlight-numbers highlight-escape-sequences helpful go-mode gcmh exec-path-from-shell doom-modeline diredfl dired-rainbow dired-filter dired-avfs delight counsel-projectile counsel-dash beacon)))
+    (git-gutter org-superstar ivy-posframe smart-mode-line-powerline-theme powerline company smart-mode-line doom-themes yaml-mode ws-butler which-key vscode-dark-plus-theme use-package undo-tree switch-window smartparens ripgrep org no-littering multiple-cursors magit json-mode ivy-rich highlight-numbers highlight-escape-sequences helpful go-mode gcmh exec-path-from-shell doom-modeline diredfl dired-rainbow dired-filter dired-avfs delight counsel-projectile counsel-dash beacon)))
  '(powerline-default-separator (quote wave))
  '(powerline-display-buffer-size t)
  '(powerline-display-hud t)
