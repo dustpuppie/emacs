@@ -498,28 +498,25 @@ Themes are like the weather, everchanging. Currently I'm fond of...
 Delight, Diminish, Minions all serve the same purpose: ditch or minimize the impact of minor modes on the mode line:
 #+begin_src emacs-lisp
   (use-package delight
-    :ensure t)
-    ;; :Config
-    ;;       (delight '((emacs-lisp "𝐸𝐿𝐼𝑆𝑃" :major)
-    ;;              (python-mode "𝑃𝑌𝑇𝐻𝑂𝑁" :major)
-    ;;              (lisp-interaction-mode "𝐿𝐼" :major)
-    ;;              (go-mode "𝐺𝑂" :major)
-    ;;              (org-mode "𝑂𝑅𝐺" :major)
-    ;;              (help-mode "𝐻𝐸𝐿𝑃" :major)
-    ;;              (es-mode "𝐸𝑆" :major)
-    ;;              (projectile-mode " 𝑝𝑟𝑜𝑗"projectile) ;;
-    ;;              (company-box-mode nil  company-box)
-    ;;              (IBuffer " 𝑖𝑏𝑢𝑓𝑓" ibuffer)
-    ;;              (ivy-mode " 𝑖𝑣𝑦" ivy)  ;;
-    ;;              (ws-butler-mode " 𝑤𝑠" ws-butler)
-    ;;              (flycheck-mode " ✔" flycheck)
-    ;;              (flyspell-mode " 𝑆𝑃" flyspell)
-    ;;              (company-mode " Ⓒ" company)
-    ;;              (elpy-mode " 𝑒𝑙𝑝𝑦" elpy)
-    ;;              (gcmh-mode " 𝐺𝐶" gcmh)
-    ;;              (undo-tree-mode " 𝑢𝑑𝑡" undo-tree)
-    ;;              (dashboard-mode nil dashboard)
-    ;;              (which-key-mode nil which-key))))
+    :ensure t
+    :config
+    (delight '((lisp-interaction-mode "𝐿𝐼" :major)
+               (go-mode "𝐺𝑂" :major)
+               (projectile-mode " 𝑝𝑟𝑜𝑗"projectile)
+               (company-box-mode nil  company-box)
+               (IBuffer " 𝑖𝑏𝑢𝑓𝑓" ibuffer)
+               (ivy-mode " 𝑖𝑣𝑦" ivy)
+               (ivy-posframe-mode " 𝑖𝑣𝑦-𝑝" ivy-posframe)
+               (Auto-Sudoedit-mode " 𝑠𝑢𝑑𝑜" ASE)
+               (ws-butler-mode " 𝑤𝑠" ws-butler)
+               (flycheck-mode " ✔" flycheck)
+               (flyspell-mode " 𝑆𝑃" flyspell)
+               (company-mode " Ⓒ" company)
+               (elpy-mode " 𝑒𝑙𝑝𝑦" elpy)
+               (gcmh-mode " 𝐺𝐶" gcmh)
+               (undo-tree-mode " 𝑢𝑑𝑡" undo-tree)
+               (beacon-mode nil beacon)
+               (which-key-mode nil which-key))))
     (message "Delight Completed")
 #+end_src
 ** Kill buffer
@@ -602,75 +599,76 @@ Beacon is an awesome itsy package that simply highlights the current row when yo
 
       ;; redefining this here to change the switch-buffer widths; better max lengths
       ;; for my screen
-      (setq-default
-       ivy-rich-display-transformers-list
-       '(ivy-switch-buffer
-         (:columns
-          ((ivy-rich-switch-buffer-icon (:width 4))
-           ;; return the candidate itself
-           (ivy-rich-candidate (:width 40))
-           ;; return the buffer size
-           ;; return the buffer indicators
-           (ivy-rich-switch-buffer-indicators
-            (:width 4 :face error :align right))
-           ;; return the majro mode info
-           (ivy-rich-switch-buffer-project (:width 20 :face warning))
-           ;; return project name using `projectile'
-           (ivy-rich-switch-buffer-project (:width 25 :face success))
-           ;; return file path relative to project root or
-           ;; `default-directory' if project is nil
-           (ivy-rich-switch-buffer-path
-            (:width (lambda (x) (ivy-rich-switch-buffer-shorten-path
-                            x (ivy-rich-minibuffer-width 0.3))))))
-          :predicate
-          (lambda (cand) (get-buffer cand)))
+      ;; (setq-default
+      ;;  ivy-rich-display-transformers-list
+      ;;  '(ivy-switch-buffer
+      ;;    (:columns
+      ;;     ((ivy-rich-switch-buffer-icon (:width 4))
+      ;;      ;; return the candidate itself
+      ;;      (ivy-rich-candidate (:width 40))
+      ;;      ;; return the buffer size
+      ;;      ;; return the buffer indicators
+      ;;      (ivy-rich-switch-buffer-indicators
+      ;;       (:width 4 :face error :align right))
+      ;;      ;; return the majro mode info
+      ;;      (ivy-rich-switch-buffer-project (:width 20 :face warning))
+      ;;      ;; return project name using `projectile'
+      ;;      (ivy-rich-switch-buffer-project (:width 25 :face success))
+      ;;      ;; return file path relative to project root or
+      ;;      ;; `default-directory' if project is nil
+      ;;      (ivy-rich-switch-buffer-path
+      ;;       (:width (lambda (x) (ivy-rich-switch-buffer-shorten-path
+      ;;                       x (ivy-rich-minibuffer-width 0.3))))))
+      ;;     :predicate
+      ;;     (lambda (cand) (get-buffer cand)))
 
-       counsel-M-x
-       (:columns
-        ;; the original transformer
-        ((counsel-M-x-transformer (:width 40))
-         ;; return the docstring of the command
-         (ivy-rich-counsel-function-docstring (:face font-lock-doc-face))))
+      ;;  counsel-M-x
+      ;;  (:columns
+      ;;   ;; the original transformer
+      ;;   ((counsel-M-x-transformer (:width 40))
+      ;;    ;; return the docstring of the command
+      ;;    (ivy-rich-counsel-function-docstring (:face font-lock-doc-face))))
 
-       counsel-describe-function
-       (:columns
-        ;; the original transformer
-        ((counsel-describe-function-transformer (:width 40))
-         ;; return the docstring of the function
-         (ivy-rich-counsel-function-docstring (:face font-lock-doc-face))))
+      ;;  counsel-describe-function
+      ;;  (:columns
+      ;;   ;; the original transformer
+      ;;   ((counsel-describe-function-transformer (:width 40))
+      ;;    ;; return the docstring of the function
+      ;;    (ivy-rich-counsel-function-docstring (:face font-lock-doc-face))))
 
-       counsel-describe-variable
-       (:columns
-        ;; the original transformer
-        ((counsel-describe-variable-transformer (:width 40))
-         ;; return the docstring of the variable
-         (ivy-rich-counsel-docstring (:face font-lock-doc-face))))
+      ;;  counsel-describe-variable
+      ;;  (:columns
+      ;;   ;; the original transformer
+      ;;   ((counsel-describe-variable-transformer (:width 40))
+      ;;    ;; return the docstring of the variable
+      ;;    (ivy-rich-counsel-docstring (:face font-lock-doc-face))))
 
-       counsel-recentf
-       (:columns
-        ;; return the canidate itself
-        ((ivy-rich-canidate (:width 0.8))
-         ;; return the lats modified time of the file
-         (ivy-rich-file-last-modified-time (:face font-lock-comment-face))))))
+      ;;  counsel-recentf
+      ;;  (:columns
+      ;;   ;; return the canidate itself
+      ;;   ((ivy-rich-canidate (:width 0.8))
+      ;;    ;; return the lats modified time of the file
+      ;;    (ivy-rich-file-last-modified-time (:face font-lock-comment-face))))))
 
-      (setq-default ivy-rich-path-style 'abbreviate)
+      ;; (setq-default ivy-rich-path-style 'abbreviate)
 
-      :config
+      ;; :config
       (ivy-rich-mode))
 
   (use-package ivy-posframe
     :ensure t
+    :after ivy
     :custom
     (ivy-posframe-width 80)
     (ivy-posframe-min-width 80)
     (ivy-posframe-height 10)
-    (ivy-posframe-min-height)
+    (ivy-posframe-min-height 10)
+    (ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-center)))
     :config
-    (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-center)))
-    (setq ivy-posframe-parameters '((parent-frame .nil)
-                                    (left-fringe . 8)
-                                    (right-fringe . 8)))
-    (ivy-posframe-mode 1))
+  ;;  (setq ivy-posframe-parameters '((parent-frame .nil)
+  ;;                                  (left-fringe . 8)
+  ;;                                  (right-fringe . 8)))
+    (ivy-posframe-mode))
 
   (message "Ivy/Councel/Swiper Completed")
 #+end_src
@@ -993,6 +991,7 @@ go get -v golang.org/x/tools/cmd/guru
 #+begin_src emacs-lisp
   (use-package go-mode
     :ensure t
+    :mode ("\\.go\\'" . go-mode)
     :bind ((:map go-mode-map
                  ("kbd M-," . 'godef-jump)
                  ("kbd <F9>" . 'compile)))
