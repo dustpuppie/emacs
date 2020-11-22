@@ -1077,6 +1077,11 @@ go get -v golang.org/x/tools/cmd/guru
 * Tramp
 #+begin_src emacs-lisp
   (setq tramp-default-method "ssh")
+
+  (use-package auto-sudoedit
+    :ensure t
+    :config
+    (auto-sudoedit-mode 1))
 #+end_src
 * Org Mode
 ** Variables
