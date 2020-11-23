@@ -12,7 +12,8 @@
 			      (setq debug-on-error nil
 				    debug-on-quit  nil)))
 
-(require 'cl)
+;; (require 'cl)
+(require 'project)
 (require 'package)
 ;; Add some repositories
 (add-to-list 'package-archives
