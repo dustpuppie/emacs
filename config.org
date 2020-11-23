@@ -105,6 +105,7 @@ This is a package that helps with emacs' tendancy to splatter backups and config
   (global-set-key (kbd "C->") 'mc/mark-next-like-this)
   (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
   (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+  (global-set-key (kbd "<f7>") 'vterm)
 
   (message "Global Keys Completed")
 #+end_src
@@ -769,6 +770,11 @@ Awesome program that prompts you for potential keystrokes after you hit a contro
                  ("C-c C-p" . wdired-change-to-wdired-mode)))
     :config
     (put 'dired-find-alternate-file 'disabled nil))
+
+  (use-package all-the-icons-dired
+    :ensure t)
+  (use-package dired-single
+    :ensure t)
   (message "Dired Completed")
 #+end_src
 ** Diredfl
@@ -928,13 +934,27 @@ Magit alone is a compelling reason to use emacs
 Line numbering is essential for coding, but gets in the way in other modes
 #+begin_src emacs-lisp
   (column-number-mode)
-  (global-display-line-numbers-mode t)
-  ;; disable line numbers for some modes
-  (dolist (mode '(org-mode-hook
-                  term-mode-hook
-                  shell-mode-hook
-                  eshell-mode-hook))
-    (add-hook mode (lambda () (display-line-numbers-mode 0))))
+  (require 'display-line-numbers)
+  (defcustom display-line-numbers-exempt-modes
+    '(vterm-mode
+      eshell-mode
+      shell-mode
+      term-mode
+      ansi-term-mode treemacs-mode)
+    "Major modes on which to disable the linum mode, exempts them from global requirement."
+    :group 'display-line-numbers
+    :type 'list
+    :version "green")
+
+  (defun display-line-numbers--turn-on ()
+    "turn on line numbers but exempting certain major modes defined in `display-line-numbers-exempt-modes'."
+    (if (and
+         (not (member major-mode display-line-numbers-exempt-modes))
+         (not (minibufferp)))
+        (display-line-numbers-mode)))
+
+  (global-display-line-numbers-mode)
+
 #+end_src
 ** Highlighting
 #+begin_src emacs-lisp
@@ -952,13 +972,17 @@ Need to load this so eglot can pick it up
 #+begin_src emacs-lisp
   (use-package company
     :ensure t
+    :after lsp-mode
+    :hook (lsp-mode . company-mode)
     :diminish
     :bind (("M-/"    . company-complete)
            ("C-M-/"  . company-files)
            :map company-active-map
            ("<tab>"  . company-complete)
            ("C-n"    . company-select-next)
-           ("C-p"    . company-select-previous))
+           ("C-p"    . company-select-previous)
+           :map lsp-mode-map
+           ("<tab>"  . company-indent-or-complete-common))
     :custom
     (company-minimum-prefix-length      2)
     (company-dabbrev-other-buffers      t)
@@ -968,51 +992,77 @@ Need to load this so eglot can pick it up
     (company-selection-wrap-around      t)
     (company-dabbrev-downcase         nil)
     (company-dabbrev-ignore-case        t)
-    (company-idle-delay                 .8)
+    (company-idle-delay                 .4)
     :config
-    (global-company-mode 0)
-    (add-hook 'prog-mode-hook 'company-mode))
+    (global-company-mode 0))
+
   (message "Company Completed")
 #+end_src
 * Languages
+** Eglot
+#+begin_src emacs-lisp
+  (use-package eglot
+    :ensure t)
+  (add-hook 'python-mode-hook 'eglot-ensure)
+#+end_src
+** LSP Mode
+#+begin_src emacs-lisp
+  (use-package lsp-mode
+    :disabled
+    :ensure t
+    :commands (lsp lsp-deferred)
+    :custom
+    (lsp-keymap-prefix "C-c l")
+    :config
+    (lsp-enable-which-key-integration t))
+#+end_src
+** TypeScript
+#+begin_src emacs-lisp
+  (use-package typescript-mode
+    :ensure t
+    :mode "\\.ts\\'"
+    :hook (typescript-mode . lsp-deferred)
+    :custom
+    (typescript-indent-level 2))
+#+end_src
 ** Go
 - install go imports
 #+begin_src shell
-go get golang.org/x/tools/cmd/goimports
+## go get golang.org/x/tools/cmd/goimports
 #+end_src
 - install godef
 #+begin_src shell
-go -get -v github.com/rogeppe/godef
+## go -get -v github.com/rogeppe/godef
 #+end_src
 - install guru
 #+begin_src shell
-go get -v golang.org/x/tools/cmd/guru
+## go get -v golang.org/x/tools/cmd/guru
 #+end_src
 #+begin_src emacs-lisp
-  (use-package go-mode
-    :ensure t
-    :mode ("\\.go\\'" . go-mode)
-    :bind ((:map go-mode-map
-                 ("kbd M-," . 'godef-jump)
-                 ("kbd <F9>" . 'compile)))
-    :config
-    (setq gofmt-command "goimports")
-    (add-hook 'before-save-hook 'gofmt-before-save)
-    (setq compile-command "echo Build... && go builld -v && echo Testing... && go test -v && echo Linter... && go lint"))
+    (use-package go-mode
+      :ensure t
+      :mode ("\\.go\\'" . go-mode)
+      :bind ((:map go-mode-map
+                   ("kbd M-," . 'godef-jump)
+                   ("kbd <F9>" . 'compile))))
+    ;;   :config
+    ;;   (setq gofmt-command "goimports")
+    ;;   (add-hook 'before-save-hook 'gofmt-before-save)
+    ;;   (setq compile-command "echo Build... && go builld -v && echo Testing... && go test -v && echo Linter... && go lint"))
 
-  ;; Smaller compilation buffer
-  (setq compilation-window-height 14)
-  (defun dpy/my-compilation-hook ()
-    (when (not (get-buffer-window "*compilation*"))
-      (save-selected-window
-        (save-excursion
-          (let* ((w (split-window-vertically))
-                 (h (window-height w)))
-            (select-window w)
-            (switch-to-buffer "*compilation*")
-            (shrink-window (- h compilation-window-height)))))))
-  (add-hook 'compilation-mode-hook 'dpy/my-compilation-hook)
-(message "Go Completed")
+    ;; ;; Smaller compilation buffer
+    ;; (setq compilation-window-height 14)
+    ;; (defun dpy/my-compilation-hook ()
+    ;;   (when (not (get-buffer-window "*compilation*"))
+    ;;     (save-selected-window
+    ;;       (save-excursion
+    ;;         (let* ((w (split-window-vertically))
+    ;;                (h (window-height w)))
+    ;;           (select-window w)
+    ;;           (switch-to-buffer "*compilation*")
+    ;;           (shrink-window (- h compilation-window-height)))))))
+    ;; (add-hook 'compilation-mode-hook 'dpy/my-compilation-hook)
+  (message "Go Completed")
 #+end_src
 ** JSON
 #+begin_src emacs-lisp
@@ -1028,7 +1078,6 @@ go get -v golang.org/x/tools/cmd/guru
 #+end_src
 ** Python
 #+begin_src emacs-lisp
-  (add-hook 'python-mode-hook 'eglot-ensure)
   (message "Python Completed")
 #+end_src
 * Terminal Emulators and shells
@@ -1045,33 +1094,39 @@ go get -v golang.org/x/tools/cmd/guru
 #+end_src
 ** vterm
 #+begin_src emacs-lisp
-  (use-package vterm
-    :ensure t
-    :commands vterm
-    :custom
-    (term-prompt-regexp "^[^#$%>\n]*[#$%>] *")
-    (vterm-max-scrollback 10000))
+    (use-package vterm
+      :ensure t
+      :commands vterm
+      :custom
+      (vterm-shell "zsh")
+      (vterm-max-scrollback 10000))
 #+end_src
 ** EShell
 #+begin_src emacs-lisp
-  (use-package eshell-git-prompt
-    :ensure t)
+    (use-package eshell-git-prompt
+      :ensure t)
 
-  (defun dpy/configure-eshell ()
-    "Save comand history when commands are entered."
-    (add-hook 'eshell-pre-command-hook 'eshell-save-some-history)
-    ;; Truncate buffer for performance
-    (add-to-list 'eshell-output-filter-functions 'eshell-truncate-buffer)
+    (defun dpy/configure-eshell ()
+      "Save comand history when commands are entered."
+      (add-hook 'eshell-pre-command-hook 'eshell-save-some-history)
+      ;; Truncate buffer for performance
+      (add-to-list 'eshell-output-filter-functions 'eshell-truncate-buffer)
 
-    (setq eshell-history-size          10000
-          eshell-buffer-maximum-lines  10000
-          eshell-hist-ignoredups           t
-          eshell-scroll-to-bottom-on-input t))
+      (setq eshell-history-size          10000
+            eshell-buffer-maximum-lines  10000
+            eshell-hist-ignoredups           t
+            eshell-scroll-to-bottom-on-input t))
 
-  (use-package eshell
-    :hook (eshell-first-time-mode . dpy/configure-eshell)
-    :config
-    (eshell-git-prompt-use-theme 'powerline))
+    (use-package eshell
+      :hook (eshell-first-time-mode . dpy/configure-eshell)
+      :config
+
+
+      (with-eval-after-load 'esh-opt
+        (setq eshell-destroy-buffer-when-process-dies t)
+        (setq eshell-visual-commands '("htop" "zsh" "vim" "ssh")))
+
+      (eshell-git-prompt-use-theme 'robbyrussell))
 #+end_src
 * Tramp
 #+begin_src emacs-lisp
