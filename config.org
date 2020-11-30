@@ -954,7 +954,7 @@ Line numbering is essential for coding, but gets in the way in other modes
         (display-line-numbers-mode)))
 
   (global-display-line-numbers-mode)
-
+(message "Line Numbering Completed")
 #+end_src
 ** Highlighting
 #+begin_src emacs-lisp
@@ -965,14 +965,12 @@ Line numbering is essential for coding, but gets in the way in other modes
   (hes-mode)
 
   (message "Highlighting Completed")
-
 #+end_src
 ** Company
 Need to load this so eglot can pick it up
 #+begin_src emacs-lisp
   (use-package company
     :ensure t
-    :after lsp-mode
     :hook (lsp-mode . company-mode)
     :diminish
     :bind (("M-/"    . company-complete)
@@ -992,29 +990,53 @@ Need to load this so eglot can pick it up
     (company-selection-wrap-around      t)
     (company-dabbrev-downcase         nil)
     (company-dabbrev-ignore-case        t)
-    (company-idle-delay                 .4)
+    (company-idle-delay                .4)
     :config
-    (global-company-mode 0))
+    (global-company-mode 1))
+
+  (use-package company-box
+    :ensure t
+    :hook (company-mode . company-box-mode))
 
   (message "Company Completed")
 #+end_src
 * Languages
 ** Eglot
 #+begin_src emacs-lisp
-  (use-package eglot
-    :ensure t)
-  (add-hook 'python-mode-hook 'eglot-ensure)
+  ;; (use-package eglot
+  ;;   :ensure t)
+  ;; (add-hook 'python-mode-hook 'eglot-ensure)
+  ;; (add-hook 'python-mode-hook 'eglot-ensure)
 #+end_src
 ** LSP Mode
 #+begin_src emacs-lisp
+  (setq lsp-keymap-prefix "C-c l")
   (use-package lsp-mode
-    :disabled
     :ensure t
     :commands (lsp lsp-deferred)
-    :custom
-    (lsp-keymap-prefix "C-c l")
+    :hook ((python-mode  . lsp-deferred)
+           (go-mode      . lsp-deferred)
+           (typeset-mode . lsp-deferred))
     :config
-    (lsp-enable-which-key-integration t))
+    (lsp-enable-which-key-integration 1))
+
+  (use-package lsp-ui
+    :ensure t
+    :commands lsp-ui-mode
+    :custom
+    (lsp-ui-doc-position 'bottom-and-right))
+
+  (use-package lsp-ivy
+    :ensure t
+    :commands lsp-ivy-workspace-symbol)
+
+  (use-package lsp-treemacs
+    :ensure t
+    :defer
+    :commands lsp-treemacs-errors-list)
+
+
+  (message "LSP Completed")
 #+end_src
 ** TypeScript
 #+begin_src emacs-lisp
@@ -1024,6 +1046,7 @@ Need to load this so eglot can pick it up
     :hook (typescript-mode . lsp-deferred)
     :custom
     (typescript-indent-level 2))
+(message "Typeset Completed")
 #+end_src
 ** Go
 - install go imports
@@ -1039,30 +1062,56 @@ Need to load this so eglot can pick it up
 ## go get -v golang.org/x/tools/cmd/guru
 #+end_src
 #+begin_src emacs-lisp
-    (use-package go-mode
+    (defun dpy/my-go-electric-brace ()
+      "Insert an opening brace may be with the closing one. If there is a space
+    before the brace also adds new line with properly indented closing brace and
+    moves cursor to another line inserted between the braces."
+      (interactive)
+       (insert "{")
+       (when (looking-back " {")
+         (newline)
+         (indent-according-to-mode)
+         (save-excursion
+           (newline)
+            (insert "}")
+            (indent-according-to-mode))))
+
+    (defun dpy/godoc-package ()
+      "Display godoc for given package (with completion)."
+      (interactive)
+      (godoc (ivy-read "Package: " (go-packages) :require-match t)))
+
+    ;; (use-package go-guru
+    ;;   :ensure t
+    ;;   :after go-mode)
+
+  (use-package go-mode
       :ensure t
       :mode ("\\.go\\'" . go-mode)
+      :hook (go-mode . lsp-deferred)
       :bind ((:map go-mode-map
-                   ("kbd M-," . 'godef-jump)
-                   ("kbd <F9>" . 'compile))))
-    ;;   :config
-    ;;   (setq gofmt-command "goimports")
-    ;;   (add-hook 'before-save-hook 'gofmt-before-save)
-    ;;   (setq compile-command "echo Build... && go builld -v && echo Testing... && go test -v && echo Linter... && go lint"))
+                   ("C-c P"   . dpy/godoc-package)
+                   ("{"       . dpy/my-go-electric-brace))))
+  ;;                  ("kbd <F9>" . 'compile))))
 
-    ;; ;; Smaller compilation buffer
-    ;; (setq compilation-window-height 14)
-    ;; (defun dpy/my-compilation-hook ()
-    ;;   (when (not (get-buffer-window "*compilation*"))
-    ;;     (save-selected-window
-    ;;       (save-excursion
-    ;;         (let* ((w (split-window-vertically))
-    ;;                (h (window-height w)))
-    ;;           (select-window w)
-    ;;           (switch-to-buffer "*compilation*")
-    ;;           (shrink-window (- h compilation-window-height)))))))
-    ;; (add-hook 'compilation-mode-hook 'dpy/my-compilation-hook)
-  (message "Go Completed")
+      ;;   :config
+      ;;   (setq gofmt-command "goimports")
+      ;;   (add-hook 'before-save-hook 'gofmt-before-save)
+      ;;   (setq compile-command "echo Build... && go builld -v && echo Testing... && go test -v && echo Linter... && go lint"))
+
+      ;; ;; Smaller compilation buffer
+      ;; (setq compilation-window-height 14)
+      ;; (defun dpy/my-compilation-hook ()
+      ;;   (when (not (get-buffer-window "*compilation*"))
+      ;;     (save-selected-window
+      ;;       (save-excursion
+      ;;         (let* ((w (split-window-vertically))
+      ;;                (h (window-height w)))
+      ;;           (select-window w)
+      ;;           (switch-to-buffer "*compilation*")
+      ;;           (shrink-window (- h compilation-window-height)))))))
+      ;; (add-hook 'compilation-mode-hook 'dpy/my-compilation-hook)
+    (message "Go Completed")
 #+end_src
 ** JSON
 #+begin_src emacs-lisp
