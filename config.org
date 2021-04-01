@@ -744,6 +744,74 @@ A couple of custom functions to have the cursor follow when you open a new windo
 (global-undo-tree-mode))
 (message "Undo Completed")
 #+end_src
+** Treemacs
+#+begin_src emacs-lisp
+  (use-package Treemacs
+  :config
+  (progn
+    (setq treemacs-follow-after-init t
+          treemacs-recenter-after-file-follow t
+          treemacs-width 30
+          treemacs-recenter-after-project-expand 'on-distance
+          treemacs-eldoc-display nil
+          treemacs-collapse-dirs (if (executable-find "python") 3 0)
+          treemacs-silent-refresh t
+          treemacs-eldoc-display t
+          treemacs-silent-filewatch t
+          treemacs-change-root-without-asking t
+          treemacs-sorting 'alphabetic-asc
+          treemacs-show-hidden-files t
+          treemacs-never-persist nil
+          treemacs-is-never-other-window t
+          treemacs-user-mode-line-format 'none)
+    ;; set the correct python3 executable path. This is needed for
+    ;; treemacs-git-mode extended
+    (setq treemacs-python-executable (executable-fine "python"))
+
+    ;; highlight current line in fringe for tremacs window
+    (treemacs-fringe-indicator-mode)
+
+    (treemacs-follow-mode t)
+    (treemacs-filewatch-mode t)
+
+    (pcase (cons (not (null (executable-find "git")))
+                 (not (null treemacs-python-executable)))
+      (`(t . t)
+       (treemacs-git-mode 'deferred))
+      ('(t . _)
+       (treemacs-git-mode 'simple))))
+
+  :bind
+  (:map global-map
+        ("C-c f" . treemacs-select-window)
+        ("C-x t 1" . treemacs-delete-other-windows)))
+
+  (use-package treemacs-projectile
+    :after treemacs projectile
+    :bind (:map global-map
+                ("C-c o t" . treemacs-projectile)))
+
+  (use-package treemacs-icons-dired
+    :after treemacs dired
+    :config (treemacs-icons-dired-mode))
+
+  (use-package treemacs-magit
+    :after treemacs magit)
+
+  ;; Integration between lsp-mode and treemacs and implementation of treeview
+  ;; controls using tremacs as a tree renderer.
+  ;; https://github.com/emacs-lsp/lsp-treemacs
+
+  (use-package lsp-treemacs
+    :after treemacs
+    :config
+    (lsp-treemacs-sync-mode 1))
+
+  ;; treemacs theme using all-the-icons
+  (use-package treemacs-all-the-icons
+    :after treemacs
+    :config (treemacs-load-theme 'all-the-icons))
+#+end_src
 ** Uniquify
 This package makes sure each buffer is uniquily named:
 #+begin_src emacs-lisp
@@ -862,8 +930,8 @@ This is a re-package of dired+ by Purcell. Simply makes for a more colorful dire
     (dired-rainbow-define-chmod executable-unix "#38c172" "-.*x.*"))
 (message "Dired Completed")
 #+End_src
-* Development
-** Universal
+`* Development
+* Universal
 #+begin_src emacs-lisp
 (setq-default indent-tabs-mode nil)
 (global-font-lock-mode)
@@ -949,6 +1017,8 @@ Line numbering is essential for coding, but gets in the way in other modes
       shell-mode
       term-mode
       pdf-view-mode
+      man-mode
+
       ansi-term-mode treemacs-mode)
     "Major modes on which to disable the linum mode, exempts them from global requirement."
     :group 'display-line-numbers
@@ -1003,20 +1073,19 @@ Need to load this so eglot can pick it up
     :config
     (global-company-mode 1))
 
+  (use-package company-lsp
+    :ensure t
+    :commands company-lsp)
+
   (use-package company-box
     :ensure t
     :hook (company-mode . company-box-mode))
 
+
   (message "Company Completed")
+
 #+end_src
 * Languages
-** Eglot
-#+begin_src emacs-lisp
-  ;; (use-package eglot
-  ;;   :ensure t)
-  ;; (add-hook 'python-mode-hook 'eglot-ensure)
-  ;; (add-hook 'python-mode-hook 'eglot-ensure)
-#+end_src
 ** LSP Mode
 #+begin_src emacs-lisp
   (setq lsp-keymap-prefix "C-c l")
@@ -1035,15 +1104,14 @@ Need to load this so eglot can pick it up
     :custom
     (lsp-ui-doc-position 'bottom-and-right))
 
+  (setq lsp-ui-peek-enable t
+        lsp-ui-sideline-enable t
+        lsp-imenu-enable t
+        lsp-flycheck-enable t)
+
   (use-package lsp-ivy
     :ensure t
     :commands lsp-ivy-workspace-symbol)
-
-  (use-package lsp-treemacs
-    :ensure t
-    :defer
-    :commands lsp-treemacs-errors-list)
-
 
   (message "LSP Completed")
 #+end_src
@@ -1071,56 +1139,61 @@ Need to load this so eglot can pick it up
 ## go get -v golang.org/x/tools/cmd/guru
 #+end_src
 #+begin_src emacs-lisp
-    (defun dpy/my-go-electric-brace ()
-      "Insert an opening brace may be with the closing one. If there is a space
-    before the brace also adds new line with properly indented closing brace and
-    moves cursor to another line inserted between the braces."
-      (interactive)
-       (insert "{")
-       (when (looking-back " {")
-         (newline)
-         (indent-according-to-mode)
-         (save-excursion
-           (newline)
-            (insert "}")
-            (indent-according-to-mode))))
+      (defun dpy/my-go-electric-brace ()
+        "Insert an opening brace may be with the closing one. If there is a space
+      before the brace also adds new line with properly indented closing brace and
+      moves cursor to another line inserted between the braces."
+        (interactive)
+         (insert "{")
+         (when (looking-back " {")
+  ;;         (newline)
+           (indent-according-to-mode)
+           (save-excursion
+             (newline)
+              (insert "}")
+              (indent-according-to-mode))))
 
-    (defun dpy/godoc-package ()
-      "Display godoc for given package (with completion)."
-      (interactive)
-      (godoc (ivy-read "Package: " (go-packages) :require-match t)))
+      (defun dpy/godoc-package ()
+        "Display godoc for given package (with completion)."
+        (interactive)
+        (godoc (ivy-read "Package: " (go-packages) :require-match t)))
 
-    ;; (use-package go-guru
-    ;;   :ensure t
-    ;;   :after go-mode)
+      ;; (use-package go-guru
+      ;;   :ensure t
+      ;;   :after go-mode)
 
-  (use-package go-mode
-      :ensure t
-      :mode ("\\.go\\'" . go-mode)
-      :hook (go-mode . lsp-deferred)
-      :bind ((:map go-mode-map
-                   ("C-c P"   . dpy/godoc-package)
-                   ("{"       . dpy/my-go-electric-brace))))
-  ;;                  ("kbd <F9>" . 'compile))))
+    (defun lsp-go-install-save-hooks ()
+      (add-hook 'before-save-hook #'lsp-format-buffer t t)
+      (add-hook 'before-save-hook #'lsp-organize-imports t t))
+    (add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
 
-      ;;   :config
-      ;;   (setq gofmt-command "goimports")
-      ;;   (add-hook 'before-save-hook 'gofmt-before-save)
-      ;;   (setq compile-command "echo Build... && go builld -v && echo Testing... && go test -v && echo Linter... && go lint"))
+    (use-package go-mode
+        :ensure t
+        :mode ("\\.go\\'" . go-mode)
+        :hook (go-mode . lsp-deferred)
+        :bind ((:map go-mode-map
+                     ("C-c P"   . dpy/godoc-package)
+                     ("{"       . dpy/my-go-electric-brace)
+                     ("<f9>"    . compile))))
 
-      ;; ;; Smaller compilation buffer
-      ;; (setq compilation-window-height 14)
-      ;; (defun dpy/my-compilation-hook ()
-      ;;   (when (not (get-buffer-window "*compilation*"))
-      ;;     (save-selected-window
-      ;;       (save-excursion
-      ;;         (let* ((w (split-window-vertically))
-      ;;                (h (window-height w)))
-      ;;           (select-window w)
-      ;;           (switch-to-buffer "*compilation*")
-      ;;           (shrink-window (- h compilation-window-height)))))))
-      ;; (add-hook 'compilation-mode-hook 'dpy/my-compilation-hook)
-    (message "Go Completed")
+        :config
+        (setq gofmt-command "goimports")
+        (add-hook 'before-save-hook 'gofmt-before-save)
+        (setq compile-command "echo Build... && go build -v && echo Testing... && go test -v")
+
+        ;; Smaller compilation buffer
+        (setq compilation-window-height 14)
+        (defun dpy/my-compilation-hook ()
+          (when (not (get-buffer-window "*compilation*"))
+            (save-selected-window
+              (save-excursion
+                (let* ((w (split-window-vertically))
+                       (h (window-height w)))
+                  (select-window w)
+                  (switch-to-buffer "*compilation*")
+                  (shrink-window (- h compilation-window-height)))))))
+      (add-hook 'compilation-mode-hook 'dpy/my-compilation-hook)
+      (message "Go Completed")
 #+end_src
 ** JSON
 #+begin_src emacs-lisp
@@ -1227,6 +1300,16 @@ Need to be able to read pdf's through emacs.
     :config
     (auto-sudoedit-mode 1))
 #+end_src
+* Docker
+Manipulate docker containers from within Emacs
+#+begin_src emacs-lisp
+  (use-package docker
+    :ensure t
+    :bind ("C-c d" . docker))
+
+  (use-package dockerfile-mode
+    :ensure t)
+#+end_src
 * Org Mode
 ** Variables
 #+BEGIN_SRC emacs-lisp
@@ -1298,4 +1381,32 @@ Use bullet characters instead of asterics, plus set the head font sizes to somet
 * End
 #+begin_src emacs-lisp
   (message "Everything Completed")
+#+end_src
+#* Edwina
+Key Bindings
+
+|-------------+--------------------------------------|
+| Binding     | Action                               |
+|-------------+--------------------------------------|
+| r, C-r      | Arrange windows                      |
+| n, C-n, SPC | Move to next window                  |
+| p, C-p      | Move to previous window              |
+| N, C-S-n    | Swap places with the next window     |
+| P, C-S-p    | Swap places with the previous window |
+| %, {, [     | Decrease the size of the master area |
+| ^, }, ]     | Increase the size of the master area |
+| d, C-d      | Decrease number of windows in master |
+| i           | Increase number of windows in master |
+| k, C-k      | Delete window                        |
+| RET         | Cycle window to/from master area     |
+| c, C-c      | Clone current window                 |
+|-------------+--------------------------------------|
+See also (edwina-setup-dwm-keys) to set up alternative dwm-like key bindings.
+#+begin_src emacs-lisp
+  ;; (use-package edwina
+  ;;   :ensure t
+  ;;   :config
+  ;;   (setq display-buffer-base-action '(display-buffer-below-selected))
+  ;;   (edwina-setup-dwm-keys)
+  ;;   (edwina-mode 1))
 #+end_src
