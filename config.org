@@ -978,6 +978,8 @@ Need to load this so eglot can pick it up
     (typescript-indent-level 2))
 (message "Typeset Completed")
 #+end_src
+** C
+
 ** Go
 - install go imports
 #+begin_src shell
