@@ -1176,18 +1176,23 @@ Manipulate docker containers from within Emacs
                                 ;; make the lines in a buffer wrap around the edge of the screen
                                 (visual-line-mode)
                                 (org-indent-mode))))
+  ;; start with inline images turned on
+  (setq org-startup-with-inline-images t)
+  (setq org-todo-keywords
+      '((setqence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
 #+END_SRC
 ** Org languages
 #+begin_src emacs-lisp
-(use-package ob-go
-  :ensure t)
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((emacs-lisp . t)
-   (python     . t)
-   (perl       . t)
-   (go         . t)
-   (shell      . t)))
+  (use-package ob-go
+    :ensure t)
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((emacs-lisp . t)
+     (python     . t)
+     (perl       . t)
+     (go         . t)
+     (shell      . t)))
+
 #+End_src
 ** Structured Templates
 
