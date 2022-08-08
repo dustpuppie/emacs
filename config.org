@@ -688,23 +688,34 @@ Awesome program that prompts you for potential keystrokes after you hit a contro
 * Dired
 ** Dired itself
 #+begin_src emacs-lisp
-  (use-package dired
-    :init
-    (let ((gls (executable-find "gls")))
-      (when gls (setq insert-directory-program gls)))
-    (setq dired-recursive-deletes 'top)
-    (setq direc-dwim-target t)
-    :bind (:map dired-mode-map
-                (([mouse-2] . dired-find-file)
-                 ("C-c C-p" . wdired-change-to-wdired-mode)))
-    :config
-    (put 'dired-find-alternate-file 'disabled nil))
+      (use-package dired
+        :init
+        (let ((gls (executable-find "gls")))
+          (when gls (setq insert-directory-program gls)))
+        (setq dired-recursive-deletes 'top)
+        (setq direc-dwim-target t)
+        :bind (:map dired-mode-map
+                    (([mouse-2] . dired-find-file)
+                     ("C-c C-p" . wdired-change-to-wdired-mode)))
+        :config
+        (put 'dired-find-alternate-file 'disabled nil)
+        (when (string=system-type "darwin")
+          (setq dired-use-ls-dired nil))
 
-  (use-package all-the-icons-dired
-    :ensure t)
-  (use-package dired-single
-    :ensure t)
-  (message "Dired Completed")
+    ;; Small function to open files in a new frame from dired.
+        (defun dired-find-file-other-frame ()
+          "In Dired, visit this file or directory in another window."
+          (interactive)
+          (find-file-other-frame (dired-get-file-for-visit)))
+
+        (eval-after-load "dired"
+          '(define-key dired-mode-map "F" 'dired-find-fiile-other-frame))
+
+      (use-package all-the-icons-dired
+        :ensure t)
+      (use-package dired-single
+        :ensure t)
+      (message "Dired Completed")
 #+end_src
 ** Diredfl
 This is a re-package of dired+ by Purcell. Simply makes for a more colorful dired:
@@ -719,7 +730,7 @@ This is a re-package of dired+ by Purcell. Simply makes for a more colorful dire
 ** Dired filter
 #+begin_src emacs-lisp
   (use-package dired-filter
-    :ensure t
+    :ensure
     :after dired
     :bind (:map dired-mode-map
                 ("/" . dired-filter-map))
