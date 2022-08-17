@@ -1,3 +1,5 @@
 config.el
 elpa/
 var/
+el-get/
+.DS_Store

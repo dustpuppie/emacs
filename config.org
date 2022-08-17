@@ -753,7 +753,26 @@ Clean up backup files
     (embark-collect-mode . consult-preview-at-point-mode))
 
 #+End_src
+* PDF Viewer
+#+Begin_src emacs-lisp
+    (leaf pdf-tools
+      :doc "open and view pdf files directly in emacs"
+      :url "https:/github.com/politza/pdf-tools"
+      :ensure t
+      :config
+      (pdf-tools-install)
+      (setq-default pdf-view-display-size 'fit-width)
+      :custom
 
+      (setq TeX-view-program-selection '((output-pdf "PDF Tools"))
+  	  TeX-view-program-list '((PDF Tools" TeX-pdf-tools-sync-view"))
+  	  TeX-source-correlate-start-server))
+
+      (add-hook 'TeX-after-compliation-finished-functions
+      	  #'TeX-revert-document-buffer)
+
+      (message "PDF Viewer Completed")
+#+End_Src
 * Hydra Templates
 #+Begin_src emacs-lisp
 (leaf *hydra-goto
