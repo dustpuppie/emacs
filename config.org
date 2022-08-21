@@ -584,291 +584,161 @@ Clean up backup files
 * Theme(s)
 #+Begin_src emacs-lisp
 
-  (leaf doom-themes
-    :doc "Megapack of themes"
-    :url "https://github.com/doomemacs/themes"
-    :ensure t
-    :defer-config
-    (let ((display-table (or standard-display-table (make-display-table))))
-      (set-display-table-slot display-table 'vertical-border (make-glyph-code ?│))
-      (setq standard-display-table display-table))
-    :config
-    (load-theme 'doom-dracula t)
-    (doom-themes-neotree-config)
-    (doom-themes-org-config))
+       (leaf doom-themes
+	 :doc "Megapack of themes"
+	 :url "https://github.com/doomemacs/themes"
+	 :ensure t
+	 :defer-config
+	 (let ((display-table (or standard-display-table (make-display-table))))
+	   (set-display-table-slot display-table 'vertical-border (make-glyph-code ?│))
+	   (setq standard-display-table display-table))
+	 :config
+	 (load-theme 'doom-dracula t)
+	 (doom-themes-neotree-config)
+	 (doom-themes-org-config))
 
-  (leaf doom-theme-for-term
-    :doc "Show repository root in NeoTree"
-    :unless (window-system)
-    :preface
-    (defun doom-themes-neotree-insert-root-for-term (node)
-      ;; insert icon and project name
-      (insert
-       (propertize
-	(concat (propertize " " 'face 'neo-root-dir-face)
-		(or (neo-path--file-short-name node) "-")
-		"\n")
-	'face `(:inherit ,(append (if doom-themes-neotree-enable-variable-pitch '(variable-pitch))
-				  '(neo-root-dir-face))))))
-    :advice
-    (:override doom-themes-neotree-insert-root doom-themes-neo-tree-insert-root-for-term))
+       (leaf doom-theme-for-term
+	 :doc "Show repository root in NeoTree"
+	 :unless (window-system)
+	 :preface
+	 (defun doom-themes-neotree-insert-root-for-term (node)
+	   ;; insert icon and project name
+	   (insert
+	    (propertize
+	     (concat (propertize " " 'face 'neo-root-dir-face)
+		     (or (neo-path--file-short-name node) "-")
+		     "\n")
+	     'face `(:inherit ,(append (if doom-themes-neotree-enable-variable-pitch '(variable-pitch))
+				       '(neo-root-dir-face))))))
+	 :advice
+	 (:override doom-themes-neotree-insert-root doom-themes-neo-tree-insert-root-for-term))
 
- (leaf vscode-dark-plus-theme
-   :doc "original vscode dark theme"
-   :url "https://github.com/emacsmirror/vscode-dark-plus-theme"
-   :ensure t
-   :config
-   (setq custom-safe-theme t)
-   (load-theme 'vscode-dark-plus t))
+      ;; (leaf vscode-dark-plus-theme
+      ;;   :doc "original vscode dark theme"
+      ;;   :url "https://github.com/emacsmirror/vscode-dark-plus-theme"
+      ;;   :ensure t
+      ;;   :config
+      ;;   (setq custom-safe-theme t)
+      ;;   (load-theme 'vscode-dark-plus t))
 
+  (progn
+    (mapc #'disable-theme custom-enabled-themes)
+    (add-to-list 'load-path "/Users/dbaggero/.emacs.d/ef-themes/")
+    (require 'ef-themes)
+    (load-theme 'ef-autumn t t)
+    (load-theme 'ef-dark t t)
+    (load-theme 'ef-day t t)
+    (load-theme 'ef-light t t)
+    (load-theme 'ef-night t t)
+    (load-theme 'ef-spring t t)
+    (load-theme 'ef-summer t t)
+    (load-theme 'ef-winter t t)
+
+    (mapcar (lambda (theme)
+	      (add-to-list
+	       'custom-theme-load-path
+	       (concat "/Users/dbaggero/.emacs.d/ef-themes/" (symbol-name theme "-theme.el")))
+	      (ef-themes--list-enabled-themes))
+	    (call-interactively #'ef-themes-select)))
     (message "Theme Completed")
-#+End_src
-* Search Interface
-#+Begin_src emacs-lisp
-	  (leaf anzu
-	  :doc "Displays current match and total matches information"
-	  :url "https://github.com/emacsorphange/anzu"
-	  :ensure t
-	  :bind ("M-r" . anzu-query-replace-regexp))
 
-	  (leaf projectile
-	    :doc "Project navigation and management library"
-	    :url "https://github.com/bbatsov/projectile"
-	    :ensure t
-	    :global-minor-mode projectile-mode)
-	(message "Anzu completed")
-	  ;; Vertico ---------------------------------------------------
+  
+;; Hydra Templates -------------------------------------------------------------------------
 
-	  (leaf vertico
-	    :doc "Completion Interface"
-	    :url "https://github.com/minad/vertico/"
-	    :global-minor-mode vertico-mode
-	    :ensure t
-	    :custom
-	    (vertico-cycle . t)
-	    (vertico-count . 18))
+(leaf *hydra-goto
+  :doc "Search and move cursor"
+  :bind ("M-j" . *hydra-goto/body)
+  :pretty-hydra
+  ((:title " Goto" :color blue :quit-key "q" :foreign-keys warn :separator "-")
+   ("Got"
+    (("i" avy-goto-char       "char")
+     ("t" avy-goto-char-timer "timer")
+     ("w" avy-goto-word-2     "word")
+     ("j" avy-resume "resume"))
+    "Line"
+    (("h" avy-goto-line        "head")
+     ("e" avy-goto-end-of-line "end")
+     ("n" consult-goto-line    "number"))
+    "Topic"
+    (("o"  consult-outline      "outline")
+     ("m"  consult-imenu        "imenu")
+     ("gm" consult-global-imenu "global imenu"))
+    "Error"
+    ((","  flycheck-previous-error "previous" :exit nil)
+     ("."  flycheck-next-error "next" :exit nil)
+     ("l" consult-flycheck "list"))
+    "Spell"
+    ((">"  flyspell-goto-next-error "next" :exit nil)
+     ("cc" flyspell-correct-at-point "correct" :exit nil)))))
 
-	  (leaf vertico-posframe
-	    :doc "Show vertico in posframe"
-	    :url "https://github.com/tumashu/vertico-posframe"
-	    :global-minor-mode vertico-posframe-mode
-	    :ensure t
-	    :custom
-	    (vertico-posframe-border-width . 5)
-	    (vertico-posframe-parameters
-	     . '((left-fringe . 8)
-		 (right-fringe . 8)))
-	    :custom-face
-	    (vertico-postframe-border . ' ((t (:background "#323445")))))
-	(message "Vertico completed")
-	  (leaf consult
-	    :doc "Generate completion candidates and provide commands for completion"
-	    :url "https://github.com/minad/consult"
-	    :ensure t
-	    :bind
-	    ("M-y"    . consult-yank-pop)
-	    ("C-M-s"  . consult-line)
-	    :custom (consult-async-min-input . 1))
+(leaf *hydra-toggle
+  :doc "Toggle functions"
+  :bind ("M-t" . *hydra-toggle/body)
+  :pretty-hydra
+  ((:title " Toggle" :color blue :quit-key "q" :foreign-keys warn :separator "-")
+   ("Basic"
+    (("v" view-mode "view mode" :toggle t)
+     ("w" whitespace-mode "whitespace" :toggle t)
+     ("W" whitespace-cleanup "whitespace cleanup")
+     ("r" rainbow-mode "rainbow" :toggle t)
+     ("b" beacon-mode "beacon" :toggle t))
+    "Line & Column"
+    (("l" toggle-truncate-lines "truncate line" :toggle t)
+     ("n" display-line-numbers-mode "line number" :toggle t)
+     ("f" display-fill-column-indicator-mode "column indicator" :toggle t)
+     ("c" visual-fill-column-mode "visual column" :toggle t))
+    "Highlight"
+    (("h" highlight-symbol "highligh symbol" :toggle t)
+     ("L" hl-line-mode "line" :toggle t)
+     ("t" hl-todo-mode "todo" :toggle t)
+     ("g" git-gutter-mode "git gutter" :toggle t)
+     ("i" highlight-indent-guides-mode "indent guide" :toggle t))
+    "Window"
+    (("t" toggle-window-transparency "transparency" :toggle t)
+     ("m" toggle-window-maximize "maximize" :toggle t)
+     ("p" presentation-mode "presentation" :toggle t)))))
+(leaf *hydra-toggle-markdown1
+  :doc "Toggle functions for Markdown"
+  :bind
+  (:markdown-mode-map
+   :package markdown-mode
+   ("M-t" . *hydra-toggle-markdown1/body))
+  :pretty-hydra
+  ((:title " Toggle" :color blue :quit-key "q" :foreign-keys warn :separator "-")
+   ("Basic"
+    (("w" whitespace-mode "whitespace" :toggle t)
+     ("W" whitespace-cleanup "whitespace cleanup")
+     ("l" hl-line-mode "line" :toggle t)
+     ("g" git-gutter-mode "git gutter" :toggle t))
+    "Markdown"
+    (("v" markdown-view-mode "view mode")
+     ("u" markdown-toggle-markup-hiding "markup hiding" :toggle t)
+     ("l" markdown-toggle-url-hiding "url hiding" :toggle t))
+    "Line & Column"
+    (("l" toggle-truncate-lines "truncate line" :toggle t)
+     ("i" display-fill-column-indicator-mode "column indicator" :toggle t)
+     ("c" visual-fill-column-mode "visual column" :toggle t))
+    "Window"
+    (("t" toggle-window-transparency "transparency" :toggle t)
+     ("m" toggle-window-maximize "maximize" :toggle t)
+     ("p" presentation-mode "presentation" :toggle t)))))
 
-	  (leaf consult-flycheck
-	    :doc "Consult integration for Flycheck"
-	    :url "https://github.com/minad/consult-flycheck"
-	    :ensure t)
-
-	  (leaf affe
-	    :doc "Asynchronous Fuzzy Finder"
-	    :url "https://github.com/minad/affe"
-	    :ensure t)
-
-	  (leaf consult-ghq
-	    :doc "Consult integration for ghq (with affe)"
-	    :url "https://github.com/tomoya/consult-ghq"
-	    :ensure t)
-
-	  (leaf consult-custom
-	    :doc "Custom functions to search org documents"
-	    :after affe
-	    :require affe
-	    :preface
-	    (defun consult-find-doc ()
-	      "Search the org files in the private document directory"
-	      (interactive)
-	      (let ((affe-find-command "fdfind --ignore-case --extension org --no-ignore ."))
-		(funcall #'affe-find org-directory)))
-	    (defun consult-grep-doc ()
-	      "search text in the private document directory"
-	      (interactive)
-	      (let ((affe-grep-command "rg --null --color=never --max-columns=1000 --ignore-case --no-ignore --no-heading --line-number -v ^$ ."))
-		(funcall #'affe-grep org-directory))))
-
-	  (leaf marginalia
-	    :doc "Explain the details of the consult candidates"
-	    :url "https://github.com/minad/marginalia"
-	    :global-minor-mode marginalia-mode
-	    :ensure t
-	    :custom-face
-	    (marginalia-documentation . '((t (:foreground "#6272a4")))))
-
-	(message "Marginalia completed")
-
-  (leaf orderless
-    :doc "Completion style that matches multiple regexps"
-    :url "https://github.com/oantolin/orderless"
-    :ensure t
-    :preface
-    (defun flex-if-apostrophe (pattern _index _total)
-      (when (string-suffix-p "'" pattern)
-	`(orderless-flex . ,(substring pattern 0 -1))))
-    (defun without-if-bang (pattern _index _total)
-      (cond
-       ((equal "!" pattern)
-	'(orderless-literal . ""))
-       ((string-prefix-p "!" pattern)
-	`(orderless-without-literal . ,(substring pattern 1)))))
-    :custom
-    (completion-styles           . '(orderless))
-    (orderless-style-dispatchers . '(flex-if-apostrophe
-				     without-if-bang)))
-
-  (message "orderless completed")
-
-  (leaf embark
-    :doc "Mini-Buffer Actions Rooted in Keymaps Resources"
-    :url "https://github.com/oantolin/embark"
-    :ensure t
-    :bind*
-    ("M-a" . embark-act)
-    :custom
-    (prefix-help-command . #'embark-prefix-help-command)
-    :config
-    (setq embark-action-indicator
-	  (lambda (map _target)
-	    (which-key--show-keymap "Embark" map nil nil 'no-paging)
-	    #'which-key--hide-popup-ignore-command)
-	  embark-become-indicator embark-action-indicator))
-
-  (leaf embark-consult
-    :ensure
-    :hook
-    (embark-collect-mode . consult-preview-at-point-mode))
-
-#+End_src
-* PDF Viewer
-#+Begin_src emacs-lisp
-    (leaf pdf-tools
-      :doc "open and view pdf files directly in emacs"
-      :url "https:/github.com/politza/pdf-tools"
-      :ensure t
-      :config
-      (pdf-tools-install)
-      (setq-default pdf-view-display-size 'fit-width)
-      :custom
-
-      (setq TeX-view-program-selection '((output-pdf "PDF Tools"))
-  	  TeX-view-program-list '((PDF Tools" TeX-pdf-tools-sync-view"))
-  	  TeX-source-correlate-start-server))
-
-      (add-hook 'TeX-after-compliation-finished-functions
-      	  #'TeX-revert-document-buffer)
-
-      (message "PDF Viewer Completed")
-#+End_Src
-* Hydra Templates
-#+Begin_src emacs-lisp
-   (leaf *hydra-goto
-     :doc "Search and move cursor"
-     :bind ("M-j" . *hydra-goto/body)
-     :pretty-hydra
-     ((:title " Goto" :color blue :quit-key "q" :foreign-keys warn :separator "-")
-      ("Got"
-       (("i" avy-goto-char       "char")
-	("t" avy-goto-char-timer "timer")
-	("w" avy-goto-word-2     "word")
-	("j" avy-resume "resume"))
-       "Line"
-       (("h" avy-goto-line        "head")
-	("e" avy-goto-end-of-line "end")
-	("n" consult-goto-line    "number"))
-       "Topic"
-       (("o"  consult-outline      "outline")
-	("m"  consult-imenu        "imenu")
-	("gm" consult-global-imenu "global imenu"))
-       "Error"
-       ((","  flycheck-previous-error "previous" :exit nil)
-	("."  flycheck-next-error "next" :exit nil)
-	("l" consult-flycheck "list"))
-       "Spell"
-       ((">"  flyspell-goto-next-error "next" :exit nil)
-	("cc" flyspell-correct-at-point "correct" :exit nil)))))
-
-   (leaf *hydra-toggle
-     :doc "Toggle functions"
-     :bind ("M-t" . *hydra-toggle/body)
-     :pretty-hydra
-     ((:title " Toggle" :color blue :quit-key "q" :foreign-keys warn :separator "-")
-      ("Basic"
-       (("v" view-mode "view mode" :toggle t)
-	("w" whitespace-mode "whitespace" :toggle t)
-	("W" whitespace-cleanup "whitespace cleanup")
-	("r" rainbow-mode "rainbow" :toggle t)
-	("b" beacon-mode "beacon" :toggle t))
-       "Line & Column"
-       (("l" toggle-truncate-lines "truncate line" :toggle t)
-	("n" display-line-numbers-mode "line number" :toggle t)
-	("f" display-fill-column-indicator-mode "column indicator" :toggle t)
-	("c" visual-fill-column-mode "visual column" :toggle t))
-       "Highlight"
-       (("h" highlight-symbol "highligh symbol" :toggle t)
-	("L" hl-line-mode "line" :toggle t)
-	("t" hl-todo-mode "todo" :toggle t)
-	("g" git-gutter-mode "git gutter" :toggle t)
-	("i" highlight-indent-guides-mode "indent guide" :toggle t))
-       "Window"
-       (("t" toggle-window-transparency "transparency" :toggle t)
-	("m" toggle-window-maximize "maximize" :toggle t)
-	("p" presentation-mode "presentation" :toggle t)))))
-   (leaf *hydra-toggle-markdown1
-     :doc "Toggle functions for Markdown"
-     :bind
-     (:markdown-mode-map
-      :package markdown-mode
-      ("M-t" . *hydra-toggle-markdown1/body))
-     :pretty-hydra
-     ((:title " Toggle" :color blue :quit-key "q" :foreign-keys warn :separator "-")
-      ("Basic"
-       (("w" whitespace-mode "whitespace" :toggle t)
-	("W" whitespace-cleanup "whitespace cleanup")
-	("l" hl-line-mode "line" :toggle t)
-	("g" git-gutter-mode "git gutter" :toggle t))
-       "Markdown"
-       (("v" markdown-view-mode "view mode")
-	("u" markdown-toggle-markup-hiding "markup hiding" :toggle t)
-	("l" markdown-toggle-url-hiding "url hiding" :toggle t))
-       "Line & Column"
-       (("l" toggle-truncate-lines "truncate line" :toggle t)
-	("i" display-fill-column-indicator-mode "column indicator" :toggle t)
-	("c" visual-fill-column-mode "visual column" :toggle t))
-       "Window"
-       (("t" toggle-window-transparency "transparency" :toggle t)
-	("m" toggle-window-maximize "maximize" :toggle t)
-	("p" presentation-mode "presentation" :toggle t)))))
-
-   (leaf *hydra-search
-     :doc "Search functions"
-     :bind
-     ("M-s" . *hydra-search/body)
-     :pretty-hydra
-     ((:title " Search" :color blue :quit-key "q" :foreign-keys warn :separator "-")
-      ("Buffer"
-       (("l" consult-line "line")
-	("o" consult-outline "outline")
-	("m" consult-imenu "imenu"))
-       "Project"
-       (("f" affe-find "find")
-	("r" affe-grep "grep"))
-       "Document"
-       (("df" consult-find-doc "find")
-	("dd" consult-grep-doc "grep")))))
+(leaf *hydra-search
+  :doc "Search functions"
+  :bind
+  ("M-s" . *hydra-search/body)
+  :pretty-hydra
+  ((:title " Search" :color blue :quit-key "q" :foreign-keys warn :separator "-")
+   ("Buffer"
+    (("l" consult-line "line")
+     ("o" consult-outline "outline")
+     ("m" consult-imenu "imenu"))
+    "Project"
+    (("f" affe-find "find")
+     ("r" affe-grep "grep"))
+    "Document"
+    (("df" consult-find-doc "find")
+    ("dd" consult-grep-doc "grep")))))
 
    (leaf *hydra-git
      :bind
@@ -1023,59 +893,60 @@ Clean up backup files
 
 #+Begin_src emacs-lisp
 
-    ;; Input Assistance
-  (leaf *hydra-theme
-    :doc "Make emacs bindings that stick around"
-    :url "https://github.com/abo-abo/hydra"
-    :custom-face
-    (hydra-face-red      . '((t (:foreground "#bd93f9"))))
-    (hydra-face-blue     . '((t (:foreground "#8be9fd"))))
-    (hydra-face-pink     . '((t (:foreground "#ff79c6"))))
-    (hydra-face-teal     . '((t (:foreground "#61bfff"))))
-    (hydra-face-amaranth . '((t (:foreground "#f1fa8c")))))
-  (leaf major-mode-hydra
-    :doc "Use pretty-hydra to define template easily"
-    :url "https://github.com/jerrypnz/major-mode-hydra.el"
+      ;; Input Assistance
+    (leaf *hydra-theme
+      :doc "Make emacs bindings that stick around"
+      :url "https://github.com/abo-abo/hydra"
+      :custom-face
+      (hydra-face-red      . '((t (:foreground "#bd93f9"))))
+      (hydra-face-blue     . '((t (:foreground "#8be9fd"))))
+      (hydra-face-pink     . '((t (:foreground "#ff79c6"))))
+      (hydra-face-teal     . '((t (:foreground "#61bfff"))))
+      (hydra-face-amaranth . '((t (:foreground "#f1fa8c")))))
+    (leaf major-mode-hydra
+      :doc "Use pretty-hydra to define template easily"
+      :url "https://github.com/jerrypnz/major-mode-hydra.el"
+      :ensure t
+      :require pretty-hydra)
+    (leaf hydra-posframe
+      :doc "Show hidra hints on posframe"
+      :url "https://github.com/Ladicle/hydra-posframe"
+      :if (window-system)
+      :el-get "Ladicle/hydra-posframe"
+      :global-minor-mode hydra-posframe-mode
+      :custom
+      (hydra-posframe-border-width . 5)
+      (hydra-posframe-parameters   . '((left-fringe . 8) (right-fringe . 8)))
+      :custom-face
+      (hydra-posframe-border-face . '((t (:background "#323445")))))
+
+    ;; fill-column
+    (leaf visual-fill-column
+      :doc "Centering & Wrap text visually"
+      :url "https://codeberg.org/joostkremers/visual-fill-column"
+      :ensure t
+      :hook ((markdown-mode-hook org-mode-hook) . visual-fill-column-mode)
+      :custom
+      (visual-fill-column-width . 100)
+      (visual-fill-column-center-text . t))
+
+    (leaf display-fill-column-indicator-mode
+      :doc "Indicate maximum colum"
+      :url "https://www.emacswiki.org/emacs/FillColumnIndicator"
+      :hook ((markdown-mode-hook git-commit-mode-hook) . display-fill-column-indicator-mode))
+
+    (leaf rainbow-mode
+    :doc "Color letter that indicate the color"
+    :url "https://elpa.gnu.org/packages/rainbow-mode.html"
     :ensure t
-    :require pretty-hydra)
-  (leaf hydra-posframe
-    :doc "Show hidra hints on posframe"
-    :url "https://github.com/Ladicle/hydra-posframe"
-    :if (window-system)
-    :el-get "Ladicle/hydra-posframe"
-    :global-minor-mode hydra-posframe-mode
-    :custom
-    (hydra-posframe-border-width . 5)
-    (hydra-posframe-parameters   . '((left-fringe . 8) (right-fringe . 8)))
-    :custom-face
-    (hydra-posframe-border-face . '((t (:background "#323445")))))
+    :hook (emacs-lisp-mode-hook . rainbow-mode))
 
-  ;; fill-column
-  (leaf visual-fill-column
-    :doc "Centering & Wrap text visually"
-    :url "https://codeberg.org/joostkremers/visual-fill-column"
+  (leaf rainbow-delimiters
+    :doc "Display brackets in rainbow"
+    :url "https://www.emacswiki.org/emacs/RainbowDelimiters"
     :ensure t
-    :hook ((markdown-mode-hook org-mode-hook) . visual-fill-column-mode)
-    :custom
-    (visual-fill-column-width . 100)
-    (visual-fill-column-center-text . t))
-
-  (leaf display-fill-column-indicator-mode
-    :doc "Indicate maximum colum"
-    :url "https://www.emacswiki.org/emacs/FillColumnIndicator"
-    :hook ((markdown-mode-hook git-commit-mode-hook) . display-fill-column-indicator-mode))
-
-  (leaf rainbow-mode
-  :doc "Color letter that indicate the color"
-  :url "https://elpa.gnu.org/packages/rainbow-mode.html"
-  :ensure t
-  :hook (emacs-lisp-mode-hook . rainbow-mode))
-
-(leaf rainbow-delimiters
-  :doc "Display brackets in rainbow"
-  :url "https://www.emacswiki.org/emacs/RainbowDelimiters"
-  :ensure t
-  :hook (prog-mode-hook . rainbow-delimiters-mode))
+    :hook (prog-mode-hook . rainbow-delimiters-mode))
+  (message "Widgets Complete")
 #+end_src
 
 * Highlighting
@@ -1140,13 +1011,38 @@ Clean up backup files
     :ensure t
     :custom
     (beacon-color . "#ff8c00"))
+  
   (setq beacon-blink-duration 0.2)
   (setq beacon-size 35)
   (setq beacon-blink-delay 0.3)
 
   (beacon-mode 1)
-
+(message "Highlighting Complete")
 #+End_Src
-    (provide 'init)
-    ;;; init.el ends here
 
+* Music
+
+#+Begin_src emacs-lisp
+
+  (leaf emms
+    :doc "Emacs Multimedia System"
+    :url "https://www.gnu.org/software/emms/"
+    :config
+    (require 'emms-setup)
+    (emms-all)
+    (emms-default-players)
+    (setq emms-source-file-default-directory "~/Music")
+    (setq emms-playlist-buffer-name "*Music*"))
+  (message "Music Complete")
+#+End_src
+
+* Mail
+
+#+Begin_src emacs-lisp
+
+#+End_src
+
+  #+Begin_src emacs-lisp
+   (provide 'init)
+    ;;; init.el ends here
+#+End_Src
